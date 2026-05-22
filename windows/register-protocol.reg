@@ -1,0 +1,23 @@
+Windows Registry Editor Version 5.00
+
+; ==========================================
+; YouDown — Register ytdlp:// custom protocol
+; ==========================================
+; How to use:
+;   1. Make sure the path below points to the actual location
+;      of ytdlp-handler.bat on your machine
+;   2. Double-click this .reg file
+;   3. Confirm the security prompt
+; ==========================================
+
+[HKEY_CLASSES_ROOT\ytdlp]
+@="URL:YouDown Protocol"
+"URL Protocol"=""
+"EditFlags"=dword:00000000
+
+[HKEY_CLASSES_ROOT\ytdlp\shell]
+
+[HKEY_CLASSES_ROOT\ytdlp\shell\open]
+
+[HKEY_CLASSES_ROOT\ytdlp\shell\open\command]
+@="\"C:\\Program Files\\YouDown\\ytdlp-handler.bat\" \"%1\""

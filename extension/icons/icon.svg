@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ff5a4a"/>
+      <stop offset="70%" stop-color="#ea4335"/>
+      <stop offset="100%" stop-color="#c5221f"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="58" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <!-- Inner highlight ring -->
+  <circle cx="64" cy="64" r="52" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+
+  <!-- Download arrow stem -->
+  <rect x="54" y="40" width="20" height="30" rx="3" fill="white"/>
+
+  <!-- Download arrow head (triangle) -->
+  <polygon points="40,68 64,92 88,68" fill="white"/>
+
+  <!-- Play triangle hint (subtle) -->
+  <polygon points="60,52 60,70 74,61" fill="#ea4335" opacity="0.7"/>
+</svg>
