@@ -85,7 +85,7 @@ async function init() {
   currentTabUrl = tab.url || '';
 
   // Проверяем YouTube
-  if (!/^https?:\/\/(www\.)?youtube\.com\/(watch|shorts)\//.test(currentTabUrl)) {
+  if (!isYouTubeUrl(currentTabUrl)) {
     $('videoTitle').textContent = '❌ Открой видео на YouTube';
     $('downloadBtn').disabled = true;
     setStatus('Расширение работает только на страницах YouTube', 'error');

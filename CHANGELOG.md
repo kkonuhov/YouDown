@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 (2026-05-23)
+
+- Исправлена регрессия: URL `/watch?v=...` не распознавались из-за regex
+- Выделена функция `isYouTubeUrl()` в `url-utils.js` с dual-mode
+- Добавлены unit-тесты на валидацию URL (39 тестов, node:test)
+- Добавлена валидация YouTube URL в `handler.ps1` (защита от SSRF)
+- Добавлена валидация форматов (whitelist) в `handler.ps1`
+- Добавлены тесты консистентности между JS и PowerShell (6 тестов)
+
 ## 1.1.0 (2026-05-23)
 
 - Поддержка YouTube Shorts

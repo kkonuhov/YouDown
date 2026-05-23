@@ -1,0 +1,13 @@
+{
+  "name": "youdown",
+  "version": "1.2.0",
+  "private": true,
+  "description": "YouDown — Chrome extension for downloading YouTube videos via yt-dlp",
+  "scripts": {
+    "test": "node --test extension/tests/*.test.js",
+    "test:watch": "node --test --watch extension/tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

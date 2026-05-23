@@ -60,8 +60,43 @@ if (-not $videoUrl) {
     exit 1
 }
 
-# Set default format if empty
-if (-not $format -or $format.Trim() -eq '') {
+# --- Validate YouTube URL ---
+# ВНИМАНИЕ: Этот regex дублирован в extension/url-utils.js (функция isYouTubeUrl)
+# При изменении — обновлять оба файла!
+function Test-YouTubeUrl {
+    param([string]$url)
+    $pattern = '^https?://(www\.)?youtube\.com/(watch\?.+|shorts/.+)'
+    return ($url.Trim() -match $pattern)
+}
+
+if (-not (Test-YouTubeUrl $videoUrl)) {
+    Write-Host "[!] Ошибка: невалидный YouTube URL."
+    Write-Host "    Разрешены только видео youtube.com (watch и shorts)."
+    Write-Host "Press any key to exit..."
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    exit 1
+}
+
+# Установить формат по умолчанию, если не указан
+if ([string]::IsNullOrWhiteSpace($format)) {
+    $format = 'bestvideo+bestaudio/best'
+}
+
+# --- Validate format ---
+# ВНИМАНИЕ: Этот список должен совпадать с QUALITY_LABELS в extension/popup.js
+# При изменении — обновлять оба файла!
+$allowedFormats = @(
+    'bestvideo+bestaudio/best',
+    'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+    'bestvideo[height<=720]+bestaudio/best[height<=720]',
+    'bestvideo[height<=480]+bestaudio/best[height<=480]',
+    'bestvideo[height<=360]+bestaudio/best[height<=360]',
+    'bestaudio/best'
+)
+
+if ($format -and $format -notin $allowedFormats) {
+    Write-Host "[!] Внимание: неизвестный формат '$format'."
+    Write-Host "    Используется формат по умолчанию (bestvideo+bestaudio/best)."
     $format = 'bestvideo+bestaudio/best'
 }
 

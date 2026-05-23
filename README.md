@@ -57,14 +57,19 @@ winget install ffmpeg
 
 ```
 YouDown/
-├── extension/       ← расширение браузера
-│   ├── popup.html   ← окошко выбора качества
-│   ├── popup.js     ← логика
-│   └── manifest.json
-├── windows/         ← обработчик для Windows
-│   ├── handler.ps1  ← запускает yt-dlp
+├── extension/           ← расширение браузера
+│   ├── popup.html       ← окошко выбора качества
+│   ├── popup.js         ← логика UI
+│   ├── url-utils.js     ← валидация YouTube URL
+│   ├── manifest.json    ← конфиг расширения
+│   ├── tests/           ← unit-тесты
+│   │   └── url-validation.test.js
+│   └── icons/
+├── windows/             ← обработчик для Windows
+│   ├── handler.ps1      ← запускает yt-dlp
 │   └── ytdlp-handler.bat
-└── INSTALL.md       ← инструкция по установке
+├── package.json         ← тесты и зависимости
+└── INSTALL.md           ← инструкция по установке
 ```
 
 ## Лицензия
