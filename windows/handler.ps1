@@ -61,17 +61,17 @@ if (-not $videoUrl) {
 }
 
 # --- Validate YouTube URL ---
-# ВНИМАНИЕ: Этот regex дублирован в extension/url-utils.js (функция isYouTubeUrl)
-# При изменении — обновлять оба файла!
+# ВНИМАНИЕ: Этот regex дублирован в extension/url-utils.js
+# При изменении — обновлять оба файла! (форматы расширены: embed, youtu.be, m., music.)
 function Test-YouTubeUrl {
     param([string]$url)
-    $pattern = '^https?://(www\.)?youtube\.com/(watch\?.+|shorts/.+)'
+    $pattern = '^https?://((www\.|m\.|music\.)?youtube\.com/(watch\?.+|shorts/.+|embed/.+)|youtu\.be/.+)'
     return ($url.Trim() -match $pattern)
 }
 
 if (-not (Test-YouTubeUrl $videoUrl)) {
     Write-Host "[!] Ошибка: невалидный YouTube URL."
-    Write-Host "    Разрешены только видео youtube.com (watch и shorts)."
+    Write-Host "    Разрешены youtube.com (watch, shorts, embed), youtu.be, m.youtube.com, music.youtube.com."
     Write-Host "Press any key to exit..."
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
     exit 1
@@ -218,13 +218,12 @@ function Find-ffmpeg {
         return $cmd.Source
     } catch {}
 
-    # winget install location - search recursively
+    # winget install location - search recursively (limited depth)
     $localAppData = $env:LOCALAPPDATA
     if ($localAppData) {
         $wingetBase = "$localAppData\Microsoft\WinGet\Packages"
         if (Test-Path $wingetBase) {
-            # Search all ffmpeg.exe recursively (no depth limit - can be nested deep)
-            $results = Get-ChildItem -Path $wingetBase -Recurse -Filter 'ffmpeg.exe' -ErrorAction SilentlyContinue
+            $results = Get-ChildItem -Path $wingetBase -Recurse -Depth 3 -Filter 'ffmpeg.exe' -ErrorAction SilentlyContinue
             if ($results) {
                 return $results[0].FullName
             }

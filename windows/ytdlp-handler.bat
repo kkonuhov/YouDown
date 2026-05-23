@@ -28,9 +28,6 @@ if not defined YOUTUBE_URL (
     exit /b 1
 )
 
-REM Export to environment for PowerShell to pick up
-set "YOUTUBE_URL=%YOUTUBE_URL%"
-
 REM Launch the PowerShell handler
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0handler.ps1"
 

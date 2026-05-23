@@ -78,63 +78,113 @@ function extractJsFormats(content) {
 // ──────────────────────────────────────────────
 
 const validUrls = [
+  // ── youtube.com/watch ──
   'https://youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://youtube.com/shorts/abc123',
   'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
   'http://youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://www.youtube.com/shorts/abc123',
+  'http://www.youtube.com/watch?v=dQw4w9WgXcQ',
   'https://youtube.com/watch?v=ID&list=PLabc123',
   'https://youtube.com/watch?feature=shared&v=ID',
-  'http://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  'http://www.youtube.com/shorts/abc123',
-  'https://www.youtube.com/shorts/abc123?feature=share',
   'https://www.youtube.com/watch?v=abc123&t=30s',
   'https://youtube.com/watch?v=abc123&list=PLabc&index=1',
   'https://youtube.com/watch?v=abc123',
   'https://youtube.com/watch?v=ABC_DEF-123',
+
+  // ── youtube.com/shorts ──
   'https://youtube.com/shorts/abc123',
+  'https://www.youtube.com/shorts/abc123',
+  'http://www.youtube.com/shorts/abc123',
+  'https://www.youtube.com/shorts/abc123?feature=share',
+
+  // ── youtu.be ──
+  'https://youtu.be/dQw4w9WgXcQ',
+  'http://youtu.be/dQw4w9WgXcQ',
+  'https://youtu.be/abc123?t=30s',
+  'https://youtu.be/ABC_DEF-123?si=def456',
+
+  // ── m.youtube.com ──
+  'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://m.youtube.com/shorts/abc123',
+  'https://m.youtube.com/shorts/xyz789',
+  'https://m.youtube.com/watch?v=ID&list=PLabc123',
+  'http://m.youtube.com/watch?v=ID',
+
+  // ── music.youtube.com ──
+  'https://music.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://music.youtube.com/shorts/abc123',
+  'https://music.youtube.com/watch?v=ID&list=PLabc',
+
+  // ── youtube.com/embed ──
+  'https://youtube.com/embed/dQw4w9WgXcQ',
+  'https://www.youtube.com/embed/abc123?autoplay=1',
 ];
 
 const invalidUrls = [
+  // ── youtube.com — не-видео страницы ──
   'https://youtube.com/',
-  'https://youtube.com/feed/trending',
-  'https://example.com',
-  'https://youtu.be/dQw4w9WgXcQ',
+  'http://youtube.com/',
   'https://youtube.com',
+  'https://youtube.com/feed/trending',
   'https://youtube.com/watch',
   'https://youtube.com/shorts',
-  'http://youtube.com/',
   'https://www.youtube.com/shorts/',
+  'https://youtube.com/watch?',
   'https://www.youtube.com/feed/subscriptions',
   'https://www.youtube.com/channel/UCabc123',
   'https://www.youtube.com/user/username',
   'https://www.youtube.com/playlist?list=PLabc',
   'https://www.youtube.com/results?search_query=test',
-  'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://m.youtube.com/shorts/abc123',
+
+  // ── youtu.be — без ID ──
+  'https://youtu.be/',
+  'https://youtu.be',
+
+  // ── m.youtube.com — без ID или не-видео ──
+  'https://m.youtube.com/',
+  'https://m.youtube.com',
+
+  // ── music.youtube.com — без ID или не-видео ──
+  'https://music.youtube.com/',
+  'https://music.youtube.com',
+  'https://music.youtube.com/playlist?list=PLabc',
+  'https://music.youtube.com/channel/UCabc',
+
+  // ── embed — без ID ──
+  'https://youtube.com/embed/',
+  'https://youtube.com/embed',
+  'https://www.youtube.com/embed/',
+  'https://m.youtube.com/embed/',
+  'https://music.youtube.com/embed/',
+
+  // ── невалидные / сторонние URL ──
+  'https://example.com',
   'https://www.youtubefake.com/watch?v=abc',
   'https://www.youtube.com.evil.com/watch?v=abc',
-  'https://youtube.com/watch?',
   'ftp://youtube.com/watch?v=abc123',
+  'https://mm.youtube.com/watch?v=ID',
+
+  // ── пустые и не-строковые значения ──
   '',
   'nope',
   null,
   undefined,
 ];
 
-// ══════════════════════════════════════════════
+// ──────────────────────────────────────────────
 // Тесты
-// ══════════════════════════════════════════════
+// ──────────────────────────────────────────────
 
 describe('Консистентность URL-валидации (JS / PS1)', () => {
   const psContent = readFile('windows/handler.ps1');
   const psPattern = extractPsPattern(psContent);
 
-  // Собираем RegExp из паттерна PS1 (экранирование не нужно — паттерн валидный regex)
-  const psRegex = new RegExp(`^${psPattern}$`);
+  // Собираем RegExp из паттерна PS1 — паттерн уже содержит ^
+  // Примечание: PS1 -match регистронезависим по умолчанию, JS RegExp.test() —
+  // регистрозависим. Для набора тестовых URL (все строчные) разница не проявляется.
+  const psRegex = new RegExp(psPattern);
 
   it('regex паттерн в handler.ps1 совпадает с url-utils.js', () => {
-    // Проверяем идентичность для всех 39 тестовых URL
+    // Проверяем идентичность для всех тестовых URL
     for (const url of validUrls) {
       const jsResult = isYouTubeUrl(url);
       const psResult = psRegex.test(url);
@@ -164,6 +214,23 @@ describe('Консистентность URL-валидации (JS / PS1)', () 
     assert.ok(!psRegex.test('https://youtube.com/shorts'));
     assert.ok(!psRegex.test('https://youtube.com/shorts/'));
   });
+
+  it('все поддерживаемые форматы явно считаются валидными', () => {
+    // Предотвращает случайное возвращение новых форматов в invalidUrls
+    // Проверяем и JS, и PS1 — страхует от рассинхронизации
+    const essentialUrls = [
+      'https://youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://youtube.com/shorts/abc123',
+      'https://youtu.be/dQw4w9WgXcQ',
+      'https://m.youtube.com/watch?v=ID',
+      'https://music.youtube.com/watch?v=ID',
+      'https://youtube.com/embed/dQw4w9WgXcQ',
+    ];
+    for (const url of essentialUrls) {
+      assert.ok(isYouTubeUrl(url), `JS должен считать валидным: ${url}`);
+      assert.ok(psRegex.test(url), `PS1 должен считать валидным: ${url}`);
+    }
+  });
 });
 
 describe('Консистентность списка форматов (JS / PS1)', () => {
@@ -177,8 +244,9 @@ describe('Консистентность списка форматов (JS / PS1
     assert.deepStrictEqual(psFormats, jsFormats);
   });
 
-  it('в PS1 ровно 6 разрешённых форматов', () => {
-    assert.strictEqual(psFormats.length, 6);
+  it('количество форматов в PS1 совпадает с JS', () => {
+    assert.strictEqual(psFormats.length, jsFormats.length,
+      'Число форматов в handler.ps1 не совпадает с QUALITY_LABELS в popup.js');
     for (const f of psFormats) {
       assert.ok(typeof f === 'string' && f.length > 0, `Формат пустой: ${f}`);
     }

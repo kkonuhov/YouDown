@@ -8,17 +8,17 @@
  */
 
 /**
- * Проверяет, является ли URL страницей с YouTube видео (watch или shorts).
+ * Проверяет, является ли URL страницей с YouTube видео (watch, shorts, embed, youtu.be, m., music.).
  * @param {string} url — полный URL страницы
  * @returns {boolean} true если это YouTube видео
  *
- * ВНИМАНИЕ: Этот regex дублирован в windows/handler.ps1 (функция Test-YouTubeUrl)
+ * ВНИМАНИЕ: Этот regex дублирован в windows/handler.ps1
  * При изменении — обновлять оба файла!
  */
 function isYouTubeUrl(url) {
   // Защита от не-строковых значений
   if (typeof url !== 'string') return false;
-  return /^https?:\/\/(www\.)?youtube\.com\/(watch\?.+|shorts\/.+)/.test(url);
+  return /^https?:\/\/((www\.|m\.|music\.)?youtube\.com\/(watch\?.+|shorts\/.+|embed\/.+)|youtu\.be\/.+)/.test(url);
 }
 
 // CommonJS-экспорт для тестирования в Node.js

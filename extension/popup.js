@@ -18,6 +18,7 @@ const $ = id => document.getElementById(id);
 
 let currentTabUrl = '';
 let customDir = '';
+let reenableTimer = null;
 
 // ──────────────────────────────────────────────
 // Получить активную вкладку
@@ -106,17 +107,20 @@ async function init() {
 // ──────────────────────────────────────────────
 // Скачивание
 // ──────────────────────────────────────────────
-function handleDownload() {
+async function handleDownload() {
   if (!currentTabUrl) {
     setStatus('Нет URL видео. Обнови страницу и попробуй снова.', 'error');
     return;
   }
 
+  // Очищаем предыдущий таймер разблокировки кнопки
+  clearTimeout(reenableTimer);
+
   const format = $('quality').value;
   const qualityLabel = QUALITY_LABELS[format] || format;
 
   // Сохраняем папку перед отправкой
-  saveSettings();
+  await saveSettings();
 
   // Формируем URL протокола
   const params = new URLSearchParams({ url: currentTabUrl, f: format });
@@ -139,7 +143,7 @@ function handleDownload() {
 
     setStatus(`✅ Запрос отправлен! Видео в: ${dir}`, 'success');
 
-    setTimeout(() => {
+    reenableTimer = setTimeout(() => {
       $('downloadBtn').disabled = false;
     }, 3000);
   } catch (e) {
@@ -149,8 +153,10 @@ function handleDownload() {
 }
 
 // ──────────────────────────────────────────────
-// События
+// События — привязываем только после загрузки DOM
 // ──────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', init);
-$('downloadBtn').addEventListener('click', handleDownload);
-$('outputDir').addEventListener('change', saveSettings);
+document.addEventListener('DOMContentLoaded', () => {
+  $('downloadBtn').addEventListener('click', handleDownload);
+  $('outputDir').addEventListener('change', saveSettings);
+  init();
+});
