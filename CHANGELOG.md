@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.2.3 (2026-05-24)
+
+- Выделены общие наборы тестовых YouTube URL в shared-test-urls.js (C-extract-shared-urls)
+  — 30 валидных и 40 невалидных URL, dual-mode
+- url-validation.test.js и consistency.test.js переведены на импорт из shared-test-urls
+- Добавлены тесты целостности shared-test-urls.test.js (3 теста: дубликаты, пересечение)
+- Скачивание форматов с `bestvideo+bestaudio` прерывается с ошибкой, если ffmpeg не найден (предотвращает битые файлы)
+- `bestaudio/best` работает без ffmpeg, как и раньше
+- `saveSettings()` больше не падает если `#outputDir` отсутствует в DOM
+- `loadSettings()` не падает если `#outputDir` отсутствует в DOM
+- `handleDownload()` использует `customDir` вместо прямого чтения DOM
+- Добавлены тесты на сценарии отсутствия `#outputDir` (+8 тестов)
+- Добавлен `role="status"` и `aria-live="polite"` для `#status` в popup.html (доступность для скринридеров)
+- Добавлено логирование (`console.warn`) при ошибке сохранения настроек в `saveSettings()` (был пустой catch)
+- Добавлена `content_security_policy` в `manifest.json`: `style-src 'self' 'unsafe-inline'` для поддержки встроенных `<style>` блоков в popup.html
+- Вынесены функции Find-yt-dlp и Find-ffmpeg из handler.ps1 в отдельные модули find-yt-dlp.ps1 / find-ffmpeg.ps1
+  с dot-source подключением (C-refactor-handler-split); Find-ffmpeg теперь принимает `-ytDlpPath`
+- Добавлена проверка схемы `ytdlp://` в handler.ps1 (защита от неверной регистрации протокола)
+- Вынесено заполнение `<select id="quality">` из HTML в JS — функция `populateQualityOptions()`
+- `init()` теперь проверяет наличие критических DOM-элементов (`#videoTitle`, `#downloadBtn`)
+  при инициализации с выводом ошибки при их отсутствии
+- В `DOMContentLoaded` добавлены null-guard'ы для привязки событий к `#downloadBtn` и `#outputDir`
+- Добавлены тесты на `populateQualityOptions()` (+5), на отсутствие `#videoTitle`/`#downloadBtn` в `init()` (+2),
+  на рефакторинг выноса Find-* (+7 тестов в consistency.test.js)
+
 ## 1.2.2 (2026-05-24)
 
 - Удалён поиск Python* в Program Files из `handler.ps1` (D-remove-python-search).

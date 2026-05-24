@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     YouDown - yt-dlp handler for Windows
     Called by ytdlp-handler.bat via environment variable YOUTUBE_URL
@@ -7,10 +7,23 @@
     auto-updates yt-dlp, and downloads the video.
 #>
 
+# Dot-source функций поиска yt-dlp и ffmpeg
+. "$PSScriptRoot\find-yt-dlp.ps1"
+. "$PSScriptRoot\find-ffmpeg.ps1"
+
 $rawUrl = $env:YOUTUBE_URL
 
 if (-not $rawUrl) {
     Write-Host "YouDown: no URL received (YOUTUBE_URL is empty)"
+    Write-Host "Press any key to exit..."
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    exit 1
+}
+
+# --- Проверка схемы ---
+if ($rawUrl -notmatch '^ytdlp://') {
+    Write-Host "[!] Ошибка: ожидается протокол ytdlp://"
+    Write-Host "    Получено: $rawUrl"
     Write-Host "Press any key to exit..."
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
     exit 1
@@ -120,77 +133,7 @@ Write-Host "  Output: $outputDir"
 Write-Host "============================================"
 Write-Host ""
 
-# --- Find yt-dlp ---
-function Find-yt-dlp {
-    # Try PATH first
-    try {
-        $cmd = Get-Command 'yt-dlp.exe' -ErrorAction Stop
-        return $cmd.Source
-    } catch {}
-
-    # winget install location
-    $localAppData = $env:LOCALAPPDATA
-    if ($localAppData) {
-        $wingetBase = "$localAppData\Microsoft\WinGet\Packages"
-        if (Test-Path $wingetBase) {
-            $dirs = Get-ChildItem -Path $wingetBase -Directory -Filter 'yt-dlp*' -ErrorAction SilentlyContinue
-            foreach ($d in $dirs) {
-                $exe = "$($d.FullName)\yt-dlp.exe"
-                if (Test-Path $exe) { return $exe }
-            }
-        }
-    }
-
-    # Chocolatey
-    $chocoPath = 'C:\ProgramData\chocolatey\bin\yt-dlp.exe'
-    if (Test-Path $chocoPath) { return $chocoPath }
-
-    # Scoop
-    $userProfile = $env:USERPROFILE
-    if ($userProfile) {
-        $scoopPath = "$userProfile\scoop\apps\yt-dlp\current\yt-dlp.exe"
-        if (Test-Path $scoopPath) { return $scoopPath }
-    }
-
-    # pip (user)
-    $appData = $env:APPDATA
-    if ($appData) {
-        $pipPath = "$appData\Python\Scripts\yt-dlp.exe"
-        if (Test-Path $pipPath) { return $pipPath }
-    }
-
-    # Global paths
-    $globalPaths = @(
-        'C:\Program Files\yt-dlp\yt-dlp.exe',
-        'C:\Tools\yt-dlp.exe'
-    )
-    foreach ($p in $globalPaths) {
-        if (Test-Path $p) { return $p }
-    }
-
-    # User paths
-    if ($userProfile) {
-        $userPaths = @(
-            "$userProfile\yt-dlp.exe",
-            "$userProfile\bin\yt-dlp.exe"
-        )
-        foreach ($p in $userPaths) {
-            if (Test-Path $p) { return $p }
-        }
-    }
-
-    # Поиск каталогов Python* в Program Files — удалён (D-remove-python-search)
-    #   - pip (user) на %APPDATA%\Python\Scripts уже покрывает 99% случаев
-    #   - где бы Python ни стоял, если его Scripts в PATH (официальный установщик), то
-    #     Get-Command (шаг 1) или where.exe (ниже) найдут yt-dlp без обхода диска
-    # Last try: where.exe
-    try {
-        $where = & where.exe yt-dlp 2>$null
-        if ($where) { return $where[0].Trim() }
-    } catch {}
-
-    return $null
-}
+# --- Find yt-dlp (вынесено в find-yt-dlp.ps1) ---
 
 $ytDlpPath = Find-yt-dlp
 if (-not $ytDlpPath) {
@@ -207,65 +150,26 @@ if (-not $ytDlpPath) {
 Write-Host "  yt-dlp path: $ytDlpPath"
 Write-Host ""
 
-# --- Find ffmpeg ---
-function Find-ffmpeg {
-    # Try PATH first
-    try {
-        $cmd = Get-Command 'ffmpeg.exe' -ErrorAction Stop
-        return $cmd.Source
-    } catch {}
+# --- Find ffmpeg (вынесено в find-ffmpeg.ps1) ---
 
-    # winget install location - search recursively (limited depth)
-    $localAppData = $env:LOCALAPPDATA
-    if ($localAppData) {
-        $wingetBase = "$localAppData\Microsoft\WinGet\Packages"
-        if (Test-Path $wingetBase) {
-            $results = Get-ChildItem -Path $wingetBase -Recurse -Depth 3 -Filter 'ffmpeg.exe' -ErrorAction SilentlyContinue
-            if ($results) {
-                return $results[0].FullName
-            }
-        }
-    }
+$ffmpegPath = Find-ffmpeg -ytDlpPath $ytDlpPath
 
-    # In the same folder as yt-dlp
-    $ytDir = Split-Path $ytDlpPath -Parent
-    $localPath = "$ytDir\ffmpeg.exe"
-    if (Test-Path $localPath) { return $localPath }
-
-    # Chocolatey
-    $chocoPath = 'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
-    if (Test-Path $chocoPath) { return $chocoPath }
-
-    # Scoop
-    $userProfile = $env:USERPROFILE
-    if ($userProfile) {
-        $scoopPath = "$userProfile\scoop\apps\ffmpeg\current\ffmpeg.exe"
-        if (Test-Path $scoopPath) { return $scoopPath }
-    }
-
-    # Standard install paths
-    $paths = @(
-        'C:\Program Files\ffmpeg\bin\ffmpeg.exe',
-        'C:\ffmpeg\bin\ffmpeg.exe',
-        "$env:ProgramFiles\ffmpeg\bin\ffmpeg.exe"
-    )
-    foreach ($p in $paths) {
-        if (Test-Path $p) { return $p }
-    }
-
-    # Last try: where.exe
-    try {
-        $where = & where.exe ffmpeg 2>$null
-        if ($where) { return $where[0].Trim() }
-    } catch {}
-
-    return $null
+# --- Check ffmpeg for merge formats ---
+# Форматы с '+' требуют ffmpeg для слияния дорожек.
+# Если ffmpeg не найден — сразу прерываем, чтобы избежать битого файла.
+if (-not $ffmpegPath -and $format -match '\+') {
+    Write-Host ""
+    Write-Host "[!] Ошибка: выбранный формат требует ffmpeg для слияния видео и аудио."
+    Write-Host "    Установите ffmpeg: winget install ffmpeg"
+    Write-Host "    или скачайте с https://ffmpeg.org/download.html"
+    Write-Host ""
+    Write-Host "Press any key to exit..."
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    exit 1
 }
 
-$ffmpegPath = Find-ffmpeg
-
 # --- Auto-update yt-dlp ---
-Write-Host "[*] Checking for yt-dlp updates..."
+Write-Host '[*] Checking for yt-dlp updates...'
 try {
     $null = & $ytDlpPath -U --quiet 2>&1
     if ($LASTEXITCODE -ne 0) {
@@ -277,7 +181,7 @@ catch {
     Write-Host "[!] yt-dlp update check failed: $($_.Exception.Message)"
 }
 
-Write-Host "[*] Starting download..."
+Write-Host '[*] Starting download...'
 Write-Host ""
 
 # --- Build yt-dlp arguments ---
@@ -294,10 +198,6 @@ $ytArgs = @(
 if ($ffmpegPath) {
     Write-Host "  ffmpeg found: $ffmpegPath"
     $ytArgs += "--ffmpeg-location", $ffmpegPath
-} else {
-    Write-Host "  [!] ffmpeg not found - video and audio will not be merged."
-    Write-Host "      Install: winget install ffmpeg"
-    Write-Host "      or download from https://ffmpeg.org/download.html"
 }
 
 if ($format -eq 'bestaudio/best') {

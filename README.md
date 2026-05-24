@@ -66,6 +66,8 @@ YouDown/
 │   ├── url-utils.js       ← валидация YouTube URL
 │   ├── manifest.json      ← конфиг расширения
 │   ├── tests/             ← unit-тесты
+│   │   ├── shared-test-urls.js
+│   │   ├── shared-test-urls.test.js
 │   │   ├── url-validation.test.js
 │   │   ├── popup.test.js
 │   │   └── consistency.test.js

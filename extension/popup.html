@@ -118,14 +118,7 @@
   <div class="video-title" id="videoTitle">Загрузка...</div>
 
   <label for="quality">Качество</label>
-  <select id="quality">
-    <option value="bestvideo+bestaudio/best">🎥 Наилучшее видео</option>
-    <option value="bestvideo[height<=1080]+bestaudio/best[height<=1080]">📺 1080p Full HD</option>
-    <option value="bestvideo[height<=720]+bestaudio/best[height<=720]">📺 720p HD</option>
-    <option value="bestvideo[height<=480]+bestaudio/best[height<=480]">📺 480p</option>
-    <option value="bestvideo[height<=360]+bestaudio/best[height<=360]">📺 360p</option>
-    <option value="bestaudio/best">🎵 Только аудио (MP3)</option>
-  </select>
+  <select id="quality"></select>
 
   <label for="outputDir">Папка для скачивания</label>
   <div style="display:flex; gap:6px; margin-bottom:14px;">
@@ -134,7 +127,7 @@
 
   <button class="btn" id="downloadBtn">⬇ Скачать</button>
 
-  <div class="status" id="status"></div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
 
   <script src="url-utils.js"></script>
   <script src="popup.js"></script>

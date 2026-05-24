@@ -17,6 +17,9 @@ const path = require('node:path');
 
 const { isYouTubeUrl } = require('../url-utils');
 
+// Импортируем общие наборы тестовых URL
+const { VALID_YOUTUBE_URLS: validUrls, INVALID_YOUTUBE_URLS: invalidUrls } = require('./shared-test-urls');
+
 // ──────────────────────────────────────────────
 // Вспомогательные функции
 // ──────────────────────────────────────────────
@@ -72,103 +75,6 @@ function extractJsFormats(content) {
   }
   return keys;
 }
-
-// ──────────────────────────────────────────────
-// Тестовые URL (общие для JS и PS1 валидации)
-// ──────────────────────────────────────────────
-
-const validUrls = [
-  // ── youtube.com/watch ──
-  'https://youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  'http://youtube.com/watch?v=dQw4w9WgXcQ',
-  'http://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://youtube.com/watch?v=ID&list=PLabc123',
-  'https://youtube.com/watch?feature=shared&v=ID',
-  'https://www.youtube.com/watch?v=abc123&t=30s',
-  'https://youtube.com/watch?v=abc123&list=PLabc&index=1',
-  'https://youtube.com/watch?v=abc123',
-  'https://youtube.com/watch?v=ABC_DEF-123',
-
-  // ── youtube.com/shorts ──
-  'https://youtube.com/shorts/abc123',
-  'https://www.youtube.com/shorts/abc123',
-  'http://www.youtube.com/shorts/abc123',
-  'https://www.youtube.com/shorts/abc123?feature=share',
-
-  // ── youtu.be ──
-  'https://youtu.be/dQw4w9WgXcQ',
-  'http://youtu.be/dQw4w9WgXcQ',
-  'https://youtu.be/abc123?t=30s',
-  'https://youtu.be/ABC_DEF-123?si=def456',
-
-  // ── m.youtube.com ──
-  'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://m.youtube.com/shorts/abc123',
-  'https://m.youtube.com/shorts/xyz789',
-  'https://m.youtube.com/watch?v=ID&list=PLabc123',
-  'http://m.youtube.com/watch?v=ID',
-
-  // ── music.youtube.com ──
-  'https://music.youtube.com/watch?v=dQw4w9WgXcQ',
-  'https://music.youtube.com/shorts/abc123',
-  'https://music.youtube.com/watch?v=ID&list=PLabc',
-
-  // ── youtube.com/embed ──
-  'https://youtube.com/embed/dQw4w9WgXcQ',
-  'https://www.youtube.com/embed/abc123?autoplay=1',
-];
-
-const invalidUrls = [
-  // ── youtube.com — не-видео страницы ──
-  'https://youtube.com/',
-  'http://youtube.com/',
-  'https://youtube.com',
-  'https://youtube.com/feed/trending',
-  'https://youtube.com/watch',
-  'https://youtube.com/shorts',
-  'https://www.youtube.com/shorts/',
-  'https://youtube.com/watch?',
-  'https://www.youtube.com/feed/subscriptions',
-  'https://www.youtube.com/channel/UCabc123',
-  'https://www.youtube.com/user/username',
-  'https://www.youtube.com/playlist?list=PLabc',
-  'https://www.youtube.com/results?search_query=test',
-
-  // ── youtu.be — без ID ──
-  'https://youtu.be/',
-  'https://youtu.be',
-
-  // ── m.youtube.com — без ID или не-видео ──
-  'https://m.youtube.com/',
-  'https://m.youtube.com',
-
-  // ── music.youtube.com — без ID или не-видео ──
-  'https://music.youtube.com/',
-  'https://music.youtube.com',
-  'https://music.youtube.com/playlist?list=PLabc',
-  'https://music.youtube.com/channel/UCabc',
-
-  // ── embed — без ID ──
-  'https://youtube.com/embed/',
-  'https://youtube.com/embed',
-  'https://www.youtube.com/embed/',
-  'https://m.youtube.com/embed/',
-  'https://music.youtube.com/embed/',
-
-  // ── невалидные / сторонние URL ──
-  'https://example.com',
-  'https://www.youtubefake.com/watch?v=abc',
-  'https://www.youtube.com.evil.com/watch?v=abc',
-  'ftp://youtube.com/watch?v=abc123',
-  'https://mm.youtube.com/watch?v=ID',
-
-  // ── пустые и не-строковые значения ──
-  '',
-  'nope',
-  null,
-  undefined,
-];
 
 // ──────────────────────────────────────────────
 // Тесты
@@ -253,33 +159,55 @@ describe('Консистентность списка форматов (JS / PS1
   });
 });
 
-describe('Формат-валидация (логика PS1)', () => {
-  const allowedFormats = [
-    'bestvideo+bestaudio/best',
-    'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
-    'bestvideo[height<=720]+bestaudio/best[height<=720]',
-    'bestvideo[height<=480]+bestaudio/best[height<=480]',
-    'bestvideo[height<=360]+bestaudio/best[height<=360]',
-    'bestaudio/best',
-  ];
+/**
+ * Структурная проверка форматов в handler.ps1.
+ *
+ * ВАЖНО: Это структурные тесты — они проверяют наличие паттернов
+ * в исходном коде handler.ps1, а не поведение под PowerShell.
+ * Они не гарантируют корректность логики — только её присутствие.
+ * Полное поведенческое тестирование требует Pester (Windows/PowerShell).
+ */
+describe('Формат-валидация PS1 (структурная проверка)', () => {
+  const psContent = readFile('windows/handler.ps1');
+  const psFormats = extractPsFormats(psContent);
+  // Первый элемент allowedFormats — формат по умолчанию (см. PS1: $format при пустом/невалидном)
+  const defaultFormat = psFormats[0];
 
-  it('неизвестный формат заменяется на bestvideo+bestaudio/best', () => {
-    // Эмулируем логику из handler.ps1
-    function validateFormat(format) {
-      if (!format || format === '') {
-        return 'bestvideo+bestaudio/best';
-      }
-      if (!allowedFormats.includes(format)) {
-        return 'bestvideo+bestaudio/best';
-      }
-      return format;
-    }
+  it('PS1: защита от пустого формата через IsNullOrWhiteSpace', () => {
+    assert.ok(
+      /if\s*\(\[string\]::IsNullOrWhiteSpace\(\$format\)\)/.test(psContent),
+      'Должен быть if ([string]::IsNullOrWhiteSpace($format))'
+    );
+    // Проверяем, что внутри блока IsNullOrWhiteSpace присваивается defaultFormat
+    // Regex: IsNullOrWhiteSpace($format)){...$format = '...'
+    // \\\$format → в RegExp это \$format → совпадение с литералом $format в PS1
+    const escapedDefault = defaultFormat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const defaultInBlock = new RegExp(
+      `IsNullOrWhiteSpace\\(\\\$format\\)\\)\\s*\\{[\\s\\S]*?\\\$format\\s*=\\s*'${escapedDefault}'`
+    );
+    assert.ok(
+      defaultInBlock.test(psContent),
+      `В блоке IsNullOrWhiteSpace должно быть присваивание $format = '${defaultFormat}'`
+    );
+  });
 
-    assert.strictEqual(validateFormat(null), 'bestvideo+bestaudio/best');
-    assert.strictEqual(validateFormat(''), 'bestvideo+bestaudio/best');
-    assert.strictEqual(validateFormat('unknown/format'), 'bestvideo+bestaudio/best');
-    assert.strictEqual(validateFormat('bestvideo+bestaudio/best'), 'bestvideo+bestaudio/best');
-    assert.strictEqual(validateFormat('bestaudio/best'), 'bestaudio/best');
+  it('PS1: валидация формата через if ($format -and $format -notin $allowedFormats)', () => {
+    assert.ok(
+      /if\s*\(\s*\$format\s+-and\s+\$format\s+-notin\s+\$allowedFormats\s*\)/.test(psContent),
+      'Должно быть условие if ($format -and $format -notin $allowedFormats)'
+    );
+  });
+
+  it('PS1: присваивает default при невалидном формате', () => {
+    const assignments = psContent.match(/\$format\s*=\s*'[^']+'/g) || [];
+    const defaultAssignments = assignments.filter(
+      a => a.includes(defaultFormat)
+    );
+    assert.ok(
+      defaultAssignments.length >= 2,
+      `Должно быть минимум 2 присваивания '${defaultFormat}' ` +
+      `(для пустого и невалидного формата), найдено: ${defaultAssignments.length}`
+    );
   });
 });
 
@@ -287,8 +215,7 @@ describe('Формат-валидация (логика PS1)', () => {
  * Регрессия: D-remove-python-search
  *
  * Проверяет, что удалённый блок поиска Python* в handler.ps1
- * не был случайно восстановлен при слияниях/правках,
- * и что Find-yt-dlp по-прежнему существует с where.exe fallback.
+ * не был случайно восстановлен при слияниях/правках.
  *
  * Задача: D-remove-python-search
  */
@@ -308,11 +235,122 @@ describe('Регрессия: D-remove-python-search', () => {
       'handler.ps1 не должен содержать поиск Python* в Program Files'
     );
   });
+});
 
-  it('Find-yt-dlp всё ещё существует и имеет where.exe fallback', () => {
-    assert.ok(psContent.includes('function Find-yt-dlp'),
-      'Функция Find-yt-dlp должна существовать');
-    assert.ok(psContent.includes('where.exe yt-dlp'),
-      'Find-yt-dlp должна завершаться where.exe yt-dlp');
+/**
+ * Регрессия: синтаксис PowerShell (кавычки с [*])
+ *
+ * Проверяет, что в .ps1 файлах нет конструкции "[*]" внутри двойных кавычек.
+ * В PowerShell expandable string (двойные кавычки) "[*]" интерпретируется
+ * как попытка индексирования массива с символом *, что вызывает ошибку
+ * "Missing array index expression". Необходимо использовать одинарные кавычки.
+ *
+ * Баг: строки 172 и 184 handler.ps1 были исправлены с "[*]" на '[*]'
+ */
+describe('Регрессия: синтаксис PowerShell (кавычки с [*])', () => {
+  const psFiles = ['windows/handler.ps1', 'windows/find-yt-dlp.ps1', 'windows/find-ffmpeg.ps1'];
+
+  for (const psFile of psFiles) {
+    const content = readFile(psFile);
+
+    it(`${psFile} не содержит "[*]" в двойных кавычках`, () => {
+      // Ищем "[*]" — последовательность внутри double-quoted строки
+      // В PowerShell это ломает парсинг (попытка индексации массива)
+      // Используем regex, чтобы отличить "[*]" (двойные кавычки, опасно) от '[*]' (одинарные, безопасно)
+      assert.ok(
+        !/"\[\*\]"/.test(content),
+        `${psFile} не должен содержать "[*]" в двойных кавычках. Используйте одинарные: '[*]'`
+      );
+    });
+  }
+});
+
+/**
+ * Рефакторинг: вынос Find-yt-dlp и Find-ffmpeg в отдельные модули
+ *
+ * Проверяет, что функции успешно вынесены в find-yt-dlp.ps1 и find-ffmpeg.ps1,
+ * handler.ps1 подключает их через dot-source, а сигнатуры соответствуют
+ * новым требованиям (Find-ffmpeg принимает $ytDlpPath параметром).
+ *
+ * Задача: C-refactor-handler-split
+ */
+describe('Рефакторинг: вынос Find-yt-dlp и Find-ffmpeg', () => {
+  const handlerContent = readFile('windows/handler.ps1');
+  const findYtDlpContent = readFile('windows/find-yt-dlp.ps1');
+  const findFfmpegContent = readFile('windows/find-ffmpeg.ps1');
+
+  // ── handler.ps1 больше не содержит функции поиска ──
+
+  it('handler.ps1 не содержит function Find-yt-dlp', () => {
+    assert.ok(
+      !handlerContent.includes('function Find-yt-dlp'),
+      'handler.ps1 не должен содержать function Find-yt-dlp'
+    );
+  });
+
+  it('handler.ps1 не содержит function Find-ffmpeg', () => {
+    assert.ok(
+      !handlerContent.includes('function Find-ffmpeg'),
+      'handler.ps1 не должен содержать function Find-ffmpeg'
+    );
+  });
+
+  // ── handler.ps1 подключает модули через dot-source ──
+
+  it('handler.ps1 подключает find-yt-dlp.ps1 через dot-source', () => {
+    assert.ok(
+      handlerContent.includes('. "$PSScriptRoot\\find-yt-dlp.ps1"'),
+      'handler.ps1 должен содержать . "$PSScriptRoot\\find-yt-dlp.ps1"'
+    );
+  });
+
+  it('handler.ps1 подключает find-ffmpeg.ps1 через dot-source', () => {
+    assert.ok(
+      handlerContent.includes('. "$PSScriptRoot\\find-ffmpeg.ps1"'),
+      'handler.ps1 должен содержать . "$PSScriptRoot\\find-ffmpeg.ps1"'
+    );
+  });
+
+  // ── find-yt-dlp.ps1 ──
+
+  it('find-yt-dlp.ps1 содержит function Find-yt-dlp с where.exe fallback', () => {
+    assert.ok(
+      findYtDlpContent.includes('function Find-yt-dlp'),
+      'find-yt-dlp.ps1 должен содержать function Find-yt-dlp'
+    );
+    assert.ok(
+      findYtDlpContent.includes('where.exe yt-dlp'),
+      'Find-yt-dlp должна завершаться where.exe yt-dlp'
+    );
+  });
+
+  // ── find-ffmpeg.ps1 ──
+
+  it('find-ffmpeg.ps1 содержит function Find-ffmpeg с параметром $ytDlpPath', () => {
+    assert.ok(
+      findFfmpegContent.includes('function Find-ffmpeg'),
+      'find-ffmpeg.ps1 должен содержать function Find-ffmpeg'
+    );
+    assert.ok(
+      findFfmpegContent.includes('param([string]$ytDlpPath)') ||
+      findFfmpegContent.includes('param( [string]$ytDlpPath )'),
+      'Find-ffmpeg должен иметь param([string]$ytDlpPath)'
+    );
+  });
+
+  it('Find-ffmpeg использует Split-Path $ytDlpPath -Parent', () => {
+    assert.ok(
+      findFfmpegContent.includes('Split-Path $ytDlpPath -Parent'),
+      'Find-ffmpeg должен использовать Split-Path $ytDlpPath -Parent'
+    );
+  });
+
+  // ── Вызов в handler.ps1 ──
+
+  it('handler.ps1 вызывает Find-ffmpeg с параметром -ytDlpPath', () => {
+    assert.ok(
+      handlerContent.includes('Find-ffmpeg -ytDlpPath $ytDlpPath'),
+      'handler.ps1 должен вызывать Find-ffmpeg -ytDlpPath $ytDlpPath'
+    );
   });
 });

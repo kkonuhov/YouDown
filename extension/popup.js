@@ -4,12 +4,12 @@
  */
 
 const QUALITY_LABELS = {
-  'bestvideo+bestaudio/best': 'Наилучшее видео',
-  'bestvideo[height<=1080]+bestaudio/best[height<=1080]': '1080p Full HD',
-  'bestvideo[height<=720]+bestaudio/best[height<=720]': '720p HD',
-  'bestvideo[height<=480]+bestaudio/best[height<=480]': '480p',
-  'bestvideo[height<=360]+bestaudio/best[height<=360]': '360p',
-  'bestaudio/best': 'Только аудио (MP3)',
+  'bestvideo+bestaudio/best': '🎥 Наилучшее видео',
+  'bestvideo[height<=1080]+bestaudio/best[height<=1080]': '📺 1080p Full HD',
+  'bestvideo[height<=720]+bestaudio/best[height<=720]': '📺 720p HD',
+  'bestvideo[height<=480]+bestaudio/best[height<=480]': '📺 480p',
+  'bestvideo[height<=360]+bestaudio/best[height<=360]': '📺 360p',
+  'bestaudio/best': '🎵 Только аудио (MP3)',
 };
 
 const DEFAULT_DIR = '%USERPROFILE%\\Downloads\\YouDown';
@@ -19,6 +19,21 @@ const $ = id => document.getElementById(id);
 let currentTabUrl = '';
 let customDir = '';
 let reenableTimer = null;
+
+// ──────────────────────────────────────────────
+// Заполнить <select id="quality"> из QUALITY_LABELS
+// ──────────────────────────────────────────────
+function populateQualityOptions() {
+  const select = $('quality');
+  if (!select) return;
+  select.innerHTML = '';
+  for (const [value, label] of Object.entries(QUALITY_LABELS)) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+}
 
 // ──────────────────────────────────────────────
 // Получить активную вкладку
@@ -51,9 +66,11 @@ async function loadSettings() {
   try {
     const result = await chrome.storage.local.get('outputDir');
     customDir = result.outputDir || '';
-    $('outputDir').value = customDir || DEFAULT_DIR;
+    const el = $('outputDir');
+    if (el) el.value = customDir || DEFAULT_DIR;
   } catch (e) {
-    $('outputDir').value = DEFAULT_DIR;
+    const el = $('outputDir');
+    if (el) el.value = DEFAULT_DIR;
   }
 }
 
@@ -61,12 +78,14 @@ async function loadSettings() {
 // Сохранить настройки
 // ──────────────────────────────────────────────
 async function saveSettings() {
-  const val = $('outputDir').value.trim();
+  const el = $('outputDir');
+  if (!el) { customDir = ''; return; }
+  const val = el.value.trim();
   customDir = val;
   try {
     await chrome.storage.local.set({ outputDir: val });
   } catch (e) {
-    // Silent fail — настройка не критична
+    console.warn('YouDown: saveSettings failed:', e);
   }
 }
 
@@ -74,11 +93,21 @@ async function saveSettings() {
 // Инициализация
 // ──────────────────────────────────────────────
 async function init() {
+  const titleEl = $('videoTitle');
+  const btnEl = $('downloadBtn');
+
+  // Если DOM-элементы отсутствуют — не продолжаем
+  if (!titleEl || !btnEl) {
+    setStatus('Ошибка инициализации: элементы управления не найдены', 'error');
+    return;
+  }
+
+  populateQualityOptions();
   const tab = await getActiveTab();
 
   if (!tab) {
-    $('videoTitle').textContent = 'Не удалось получить вкладку';
-    $('downloadBtn').disabled = true;
+    titleEl.textContent = 'Не удалось получить вкладку';
+    btnEl.disabled = true;
     setStatus('Попробуй перезагрузить расширение', 'error');
     return;
   }
@@ -87,20 +116,20 @@ async function init() {
 
   // Проверяем YouTube
   if (!isYouTubeUrl(currentTabUrl)) {
-    $('videoTitle').textContent = '❌ Открой видео на YouTube';
-    $('downloadBtn').disabled = true;
+    titleEl.textContent = '❌ Открой видео на YouTube';
+    btnEl.disabled = true;
     setStatus('Расширение работает только на страницах YouTube', 'error');
     return;
   }
 
   // Показываем название видео
   const title = (tab.title || 'YouTube видео').replace(/\s*-\s*YouTube\s*$/, '');
-  $('videoTitle').textContent = title;
+  titleEl.textContent = title;
 
   // Загружаем настройки
   await loadSettings();
 
-  $('downloadBtn').disabled = false;
+  btnEl.disabled = false;
   setStatus('Готов к скачиванию', 'info');
 }
 
@@ -124,7 +153,7 @@ async function handleDownload() {
 
   // Формируем URL протокола
   const params = new URLSearchParams({ url: currentTabUrl, f: format });
-  const dir = $('outputDir').value.trim() || DEFAULT_DIR;
+  const dir = customDir || DEFAULT_DIR;
   params.append('dir', dir);
 
   const protocolUrl = `ytdlp://download?${params.toString()}`;
@@ -156,14 +185,16 @@ async function handleDownload() {
 // События — привязываем только после загрузки DOM
 // ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  $('downloadBtn').addEventListener('click', handleDownload);
-  $('outputDir').addEventListener('change', saveSettings);
+  const btnEl = $('downloadBtn');
+  const dirEl = $('outputDir');
+  if (btnEl) btnEl.addEventListener('click', handleDownload);
+  if (dirEl) dirEl.addEventListener('change', saveSettings);
   init();
 });
 
 // CommonJS-экспорт для тестирования в Node.js
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    getActiveTab, setStatus, loadSettings, saveSettings, init, handleDownload,
+    populateQualityOptions, getActiveTab, setStatus, loadSettings, saveSettings, init, handleDownload,
   };
 }
