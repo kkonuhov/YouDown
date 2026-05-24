@@ -104,19 +104,29 @@ C:\Program Files\YouDown\
 ```
 YouDown/
 ├── extension/
-│   ├── manifest.json     — манифест расширения (Manifest V3)
-│   ├── popup.html        — popup-окно с выбором качества
-│   ├── popup.js          — логика popup
+│   ├── manifest.json        — манифест расширения (Manifest V3)
+│   ├── popup.html           — popup-окно с выбором качества
+│   ├── popup.js             — логика popup
+│   ├── url-utils.js         — валидация YouTube URL
+│   ├── tests/               — unit-тесты
+│   │   ├── url-validation.test.js
+│   │   ├── popup.test.js
+│   │   └── consistency.test.js
 │   └── icons/
 │       ├── icon.svg
 │       ├── icon16.png
 │       ├── icon48.png
 │       └── icon128.png
 ├── windows/
-│   ├── ytdlp-handler.bat     — входная точка (вызывается браузером)
-│   ├── handler.ps1           — PowerShell-обработчик (парсинг URL, запуск yt-dlp)
-│   └── register-protocol.reg — регистрация протокола
-└── README.md
+│   ├── ytdlp-handler.bat       — входная точка (вызывается браузером)
+│   ├── handler.ps1             — PowerShell-обработчик (парсинг URL, запуск yt-dlp)
+│   └── register-protocol.reg   — регистрация протокола
+├── docs/                  — документация и трекинг задач
+├── package.json           — тесты (node:test)
+├── README.md              — главное описание
+├── INSTALL.md             — данная инструкция
+├── CHANGELOG.md           — история изменений
+└── AGENTS.md              — описание для агентов
 ```
 
 ## Требования

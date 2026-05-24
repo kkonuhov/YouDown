@@ -196,6 +196,27 @@ const invalidUrls = [
   'https://mm.youtube.com/watch?v=ID',
 
   // ──────────────────────────────────────────────
+  // Внедрение новой строки после ID (SSRF-защита)
+  // Без $ якоря regex матчил бы такие URL с начала строки,
+  // пропуская произвольный хвост после \n ('.' не матчит \n).
+  // ──────────────────────────────────────────────
+
+  // watch с внедрённой новой строкой
+  'https://youtube.com/watch?v=ID\n<script>malicious</script>',
+
+  // youtu.be с внедрённой новой строкой
+  'https://youtu.be/abc123\n<script>malicious</script>',
+
+  // shorts с новой строкой
+  'https://www.youtube.com/shorts/abc123\n<script>malicious</script>',
+
+  // embed с новой строкой
+  'https://youtube.com/embed/dQw4w9WgXcQ\n<script>malicious</script>',
+
+  // m.youtube.com с новой строкой
+  'https://m.youtube.com/watch?v=ID\n<script>malicious</script>',
+
+  // ──────────────────────────────────────────────
   // Сторонние сайты / фишинг
   // ──────────────────────────────────────────────
 

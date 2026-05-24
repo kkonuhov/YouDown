@@ -13,20 +13,26 @@ YouDown/
 │   ├── popup.js               ← логика UI, события
 │   ├── url-utils.js           ← isYouTubeUrl() — dual-mode (global + CommonJS)
 │   ├── manifest.json          ← MV3, activeTab + storage
-│   ├── tests/
-│   │   └── url-validation.test.js
+│   ├── tests/                 ← unit-тесты (node:test)
+│   │   ├── url-validation.test.js  ← 39 тестов для isYouTubeUrl
+│   │   ├── popup.test.js           ← тесты UI-логики
+│   │   └── consistency.test.js     ← тесты консистентности JS↔PS1
 │   └── icons/
 ├── windows/                   ← Windows-обработчик
-│   ├── handler.ps1
-│   ├── ytdlp-handler.bat
-│   └── register-protocol.reg
-├── docs/tasks/                ← трекинг задач
-│   └── youtub-shorts-support/
-├── package.json               ← только тесты (node:test)
-├── AGENTS.md
-├── CHANGELOG.md
-├── INSTALL.md
-└── README.md
+│   ├── handler.ps1            ← PowerShell-обработчик (парсинг URL, запуск yt-dlp)
+│   ├── ytdlp-handler.bat      ← входная точка (вызывается браузером)
+│   └── register-protocol.reg  ← регистрация протокола ytdlp://
+├── docs/                      ← документация и трекинг задач
+│   ├── PERF_AUDIT.md          ← отчёт по производительности
+│   └── tasks/                 ← трекинг задач
+│       ├── B-add-license/
+│       ├── D-remove-python-search/
+│       └── project-audit/
+├── package.json               ← тесты и скрипты (node:test)
+├── AGENTS.md                  ← описание для агентов
+├── CHANGELOG.md               ← история изменений
+├── INSTALL.md                 ← инструкция по установке
+└── README.md                  ← главное описание
 ```
 
 ## Ключевые файлы

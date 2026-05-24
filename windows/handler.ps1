@@ -65,7 +65,7 @@ if (-not $videoUrl) {
 # При изменении — обновлять оба файла! (форматы расширены: embed, youtu.be, m., music.)
 function Test-YouTubeUrl {
     param([string]$url)
-    $pattern = '^https?://((www\.|m\.|music\.)?youtube\.com/(watch\?.+|shorts/.+|embed/.+)|youtu\.be/.+)'
+    $pattern = '^https?://((www\.|m\.|music\.)?youtube\.com/(watch\?.+|shorts/.+|embed/.+)|youtu\.be/.+)$'
     return ($url.Trim() -match $pattern)
 }
 
@@ -179,13 +179,10 @@ function Find-yt-dlp {
         }
     }
 
-    # pip (system) - wildcard search
-    $pythonDirs = Get-ChildItem -Path 'C:\' -Directory -Filter 'Python*' -ErrorAction SilentlyContinue
-    foreach ($pd in $pythonDirs) {
-        $exe = "$($pd.FullName)\Scripts\yt-dlp.exe"
-        if (Test-Path $exe) { return $exe }
-    }
-
+    # Поиск каталогов Python* в Program Files — удалён (D-remove-python-search)
+    #   - pip (user) на %APPDATA%\Python\Scripts уже покрывает 99% случаев
+    #   - где бы Python ни стоял, если его Scripts в PATH (официальный установщик), то
+    #     Get-Command (шаг 1) или where.exe (ниже) найдут yt-dlp без обхода диска
     # Last try: where.exe
     try {
         $where = & where.exe yt-dlp 2>$null

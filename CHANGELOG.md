@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.2 (2026-05-24)
+
+- Удалён поиск Python* в Program Files из `handler.ps1` (D-remove-python-search).
+  `pip (user)` + `where.exe` покрывают все сценарии без обхода диска.
+- Добавлен `$`-якорь в regex URL-валидации `handler.ps1` (синхронизация с JS).
+- Добавлены регрессионные тесты на удаление Python-поиска в `consistency.test.js`.
+- Обновлён PERF_AUDIT.md: секция поиска Python* помечена как REMOVED.
+
 ## 1.2.1 (2026-05-24)
 
 - Удалена no-op строка в `ytdlp-handler.bat` (повторное присваивание переменной)

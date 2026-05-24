@@ -18,7 +18,7 @@
 function isYouTubeUrl(url) {
   // Защита от не-строковых значений
   if (typeof url !== 'string') return false;
-  return /^https?:\/\/((www\.|m\.|music\.)?youtube\.com\/(watch\?.+|shorts\/.+|embed\/.+)|youtu\.be\/.+)/.test(url);
+  return /^https?:\/\/((www\.|m\.|music\.)?youtube\.com\/(watch\?.+|shorts\/.+|embed\/.+)|youtu\.be\/.+)$/.test(url);
 }
 
 // CommonJS-экспорт для тестирования в Node.js

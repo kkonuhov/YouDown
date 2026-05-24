@@ -160,3 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('outputDir').addEventListener('change', saveSettings);
   init();
 });
+
+// CommonJS-экспорт для тестирования в Node.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    getActiveTab, setStatus, loadSettings, saveSettings, init, handleDownload,
+  };
+}

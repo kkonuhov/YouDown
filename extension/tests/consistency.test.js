@@ -282,3 +282,37 @@ describe('Формат-валидация (логика PS1)', () => {
     assert.strictEqual(validateFormat('bestaudio/best'), 'bestaudio/best');
   });
 });
+
+/**
+ * Регрессия: D-remove-python-search
+ *
+ * Проверяет, что удалённый блок поиска Python* в handler.ps1
+ * не был случайно восстановлен при слияниях/правках,
+ * и что Find-yt-dlp по-прежнему существует с where.exe fallback.
+ *
+ * Задача: D-remove-python-search
+ */
+describe('Регрессия: D-remove-python-search', () => {
+  const psContent = readFile('windows/handler.ps1');
+
+  it('handler.ps1 больше не ищет Python* на C:\\', () => {
+    assert.ok(
+      !/Get-ChildItem\s+-Path\s+'C:\\'\s+-Directory\s+-Filter\s+'Python\*'/.test(psContent),
+      'handler.ps1 не должен содержать Get-ChildItem -Path \'C:\\\' -Filter \'Python*\''
+    );
+  });
+
+  it('handler.ps1 больше не ищет Python* в Program Files', () => {
+    assert.ok(
+      !/Get-ChildItem\s+-Path\s+\$pf\s+-Directory\s+-Filter\s+'Python\*'/.test(psContent),
+      'handler.ps1 не должен содержать поиск Python* в Program Files'
+    );
+  });
+
+  it('Find-yt-dlp всё ещё существует и имеет where.exe fallback', () => {
+    assert.ok(psContent.includes('function Find-yt-dlp'),
+      'Функция Find-yt-dlp должна существовать');
+    assert.ok(psContent.includes('where.exe yt-dlp'),
+      'Find-yt-dlp должна завершаться where.exe yt-dlp');
+  });
+});
